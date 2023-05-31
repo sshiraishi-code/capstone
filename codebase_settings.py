@@ -1,0 +1,21 @@
+"""This module at the top level of codebase defines the global settings.
+
+In the code base, for all projects, no absolute path should be used because the
+absolute paths can be different for any individual using the codebase unless a
+docker is used. Instead, please import this global setting module and create any
+path based on the global pathes defined here.
+
+For a user's individual environment, please adjust the global setting here
+correspondingly.
+
+if you are using containers, then mount the data and code into workspace.
+You can directly use workspace instead of using this global path file.
+
+"""
+
+from pathlib import Path
+
+# DATA_PATH = Path('/workspace/data')
+# CODEBASE_PATH = Path('/workspace/ro_codebase')
+DATA_PATH = Path('/rodata/mnradonc_dev/m195381/data')
+CODEBASE_PATH = Path('/roapps/robopt/gpu/m195381/ro_codebase')
