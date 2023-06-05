@@ -1,0 +1,23 @@
+FROM pytorch/pytorch:latest
+# COPY requirements.txt /tmp/requirements.txt
+# Copy the environment.yml file to the container
+COPY environment.yml .
+
+# Install Conda and create the environment
+RUN apt-get update && \
+    apt-get install -y wget && \
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    /bin/bash /tmp/miniconda.sh -bfp /usr/local && \
+    rm -rf /tmp/miniconda.sh && \
+    conda update -n base -c defaults conda && \
+    conda env create -f environment.yml
+
+# Activate the Conda environment
+ENV PATH /opt/conda/envs/myenv/bin:$PATH && \
+	PYTHONPATH=/workspace/ro_codebase:$PYTHONPATH
+	
+# pip install --upgrade pip && \
+# pip install -r -v /tmp/requirements.txt && \
+RUN mkdir /workspace/ro_codebase && \
+    mkdir /workspace/data
+WORKDIR /workspace/ro_codebase

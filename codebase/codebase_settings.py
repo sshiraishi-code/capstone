@@ -13,9 +13,7 @@ You can directly use workspace instead of using this global path file.
 
 """
 
-from pathlib import Path
+from etils import epath
 
-# DATA_PATH = Path('/workspace/data')
-# CODEBASE_PATH = Path('/workspace/ro_codebase')
-DATA_PATH = Path('/rodata/mnradonc_dev/m195381/data')
-CODEBASE_PATH = Path('/roapps/robopt/gpu/m195381/ro_codebase')
+DATA_PATH = epath.Path('/workspace/data')
+CODEBASE_PATH = epath.Path('/workspace/ro_codebase')

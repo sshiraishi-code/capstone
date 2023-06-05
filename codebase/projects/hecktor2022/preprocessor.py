@@ -25,7 +25,7 @@ class HecktorProcessor():
     def __init__(self, data_folder: epath.Path,
                  reference: term.Modality = term.Modality.PET,
                  subvolume_size: Tuple[int, int, int] = _SUBVOLUME_SIZE
-                 ):
+                 ) -> None:
         self.data_path = data_folder
         self.original_data_path = data_folder / _ORIGINAL_DATA_FOLDER
         x, y, z = subvolume_size
@@ -49,7 +49,7 @@ class HecktorProcessor():
         if len(csv_file) > 1:
             raise ValueError(f'More than 1 file is found: {csv_file}')
         if len(csv_file) == 0:
-            raise ValueError('No file is found')
+            raise ValueError(f'No file is found here {csv_files}')
         print(f'Find patient list file: {csv_file}')
         csv_file = csv_file[0]
         with open(csv_file, 'r') as f:
@@ -59,7 +59,7 @@ class HecktorProcessor():
         print(f'Find {len(patients)} patients for Phase: {phase.value}')
         return patients
 
-    def check_resolution(self, phase: term.Phase):
+    def check_resolution(self, phase: term.Phase) -> None:
         """Print out the data size and resolution for patients."""
         patients = self.get_patient_lists(phase)
         for patient in patients:
@@ -104,7 +104,7 @@ class HecktorProcessor():
         resize_for_ref = tio.transforms.Resize(image_size)
         ref_img = resize_for_ref(ref_img)
         resample_transform = tio.transforms.Resample(target=ref_img)
-        
+
         n_subvolumes = n_slice // self.subvolume_size[-1] + 1
         total_slices = n_subvolumes * self.subvolume_size[-1]
         extra_slices = total_slices - n_slice
