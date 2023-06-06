@@ -1,5 +1,5 @@
 """HECKTOR2022 Dataloader. Tensorflow version."""
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from etils import epath
 # import tensorflow as tf
 import torch
@@ -14,20 +14,26 @@ _TENSOR_FILE_FORMAT = '.pt'
 def read_tensors(input_folder: epath.Path, id: str) -> Dict[str, torch.Tensor]:
     """Load tensors into dictionary."""
     input_file = input_folder / 'images' / (id + '_input' + _TENSOR_FILE_FORMAT)
-    label_file = input_folder / 'images' / (id + '_label' + _TENSOR_FILE_FORMAT)
-    input_data = torch.load(input_file)
-    label_data = torch.load(label_file)
+    label_file = input_folder / 'labels' / (id + '_label' + _TENSOR_FILE_FORMAT)
+    input_data = torch.load(str(input_file))  # [C, H, W, D]
+    input_data = torch.swapaxes(input_data, 1, 3)  # [C, D, W, H]
+    label_data = torch.load(str(label_file))  # [C, H, W, D]
+    label_data = torch.swapaxes(label_data, 1, 3)  # [C, D, W, H]
     return {'input': input_data, 'label': label_data}
 
 
-def _create_transform() -> transforms.Compose:
+def _create_transform(transform_types: List[str]) -> transforms.Compose:
     """Creates a transform for different phases."""
-    transform_comp = transforms.Compose([
-        transforms.RandomAffine(180, 0.2),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomVerticalFlip(p=0.5),
-        transforms.GaussianBlur((0.01, 0.5))
-    ])
+    transform_collection = []
+    if 'affine' in transform_types:
+        transform_collection.append(transforms.RandomAffine(180, 0.2))
+    if 'h_flip' in transform_types:
+        transform_collection.append(transforms.RandomHorizontalFlip(p=0.5))
+    if 'v_flip' in transform_types:
+        transform_collection.append(transforms.RandomVerticalFlip(p=0.5))
+    if 'blur' in transform_types:
+        transform_collection.append(transforms.GaussianBlur((0.01, 0.5)))
+    transform_comp = transforms.Compose(transform_collection)
     return transform_comp
 
 
@@ -37,18 +43,18 @@ class HECKTORDataset(Dataset):
     def __init__(
             self, data_folder: epath.Path,
             batch_size: int,
-            num_samples_per_epoch: int, phase: term.Phase) -> None:
-
+            num_samples_per_epoch: int, phase: term.Phase,
+            transform_types: List[str] = []) -> None:
         self.num_samples_per_epoch = num_samples_per_epoch
         self.datafolder = data_folder / phase.value
         self.phase = phase
         self.batch_size = batch_size
-        example_files = (self.datafolder / 'labels').glob(_TENSOR_FILE_FORMAT)
+        example_files = (self.datafolder / 'labels').glob('*' + _TENSOR_FILE_FORMAT)
         self.samples = [(example.stem)[:-6] for example in example_files]
         self.nsamples = len(self.samples)
 
         if phase == term.Phase.TRAIN:
-            self.transform = _create_transform()
+            self.transform = _create_transform(transform_types)
         else:
             self.transform = transforms.Compose([])
 
@@ -70,24 +76,20 @@ class HECKTORDataset(Dataset):
         return self.num_samples_per_epoch
 
 
-def get_loader(datafolder: epath.Path, 
-               train_bs: int = 1, val_bs: int = 1,
-               train_num_samples_per_epoch: int = 1,
-               val_num_samples_per_epoch: int = 1,
-               num_works: int = 0):
+def get_loader(datafolder: epath.Path,
+               phase: term.Phase,
+               batch_size: int = 1,
+               num_samples_per_epoch: int = 1,
+               transform_types: List[str] = [],
+               num_works: int = 0) -> DataLoader:
     """Gets dataset."""
-    train_dataset = HECKTORDataset(
-        datafolder, train_bs,
-        train_num_samples_per_epoch, phase=term.Phase.TRAIN)
-    valid_dataset = HECKTORDataset(
-        datafolder, val_bs,
-        val_num_samples_per_epoch, phase=term.Phase.VALID)
+    dataset = HECKTORDataset(
+        datafolder, batch_size,
+        num_samples_per_epoch, phase=phase,
+        transform_types=transform_types)
 
-    train_loader = DataLoader(
-        dataset=train_dataset, batch_size=train_bs,
+    data_loader = DataLoader(
+        dataset=dataset, batch_size=batch_size,
         shuffle=True, num_workers=num_works, pin_memory=False)
-    valid_loader = DataLoader(
-        dataset=valid_dataset, batch_size=val_bs,
-        shuffle=False, num_workers=num_works, pin_memory=False)
 
-    return train_loader, valid_loader
+    return data_loader

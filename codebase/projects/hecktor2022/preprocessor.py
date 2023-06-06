@@ -113,9 +113,12 @@ class HecktorProcessor():
         pt_padding = tio.transforms.Pad(padding=(0, 0, 0, 0, 0, extra_slices), padding_mode=0)
         ct_transforms = tio.Compose([resample_transform] + self.ct_normalization + [ct_padding])
         pt_transforms = tio.Compose([resample_transform] + self.pt_normalization + [pt_padding])
-        processed_ct = ct_transforms(ct).data
-        processed_pet = pt_transforms(pet).data
-        input_data = torch.cat((processed_ct, processed_pet), 0)
+        processed_ct = ct_transforms(ct)
+        processed_pet = pt_transforms(pet)
+        input_data = tio.Subject(
+            ct=tio.ScalarImage(processed_ct),
+            pet=tio.ScalarImage(processed_pet),
+        )
 
         volumes = {'id': patient, 'input': input_data}
         if phase != term.Phase.PRED:

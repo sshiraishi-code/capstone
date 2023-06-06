@@ -8,6 +8,7 @@ matplotlib
 nibabel
 nilearn
 pandas
+parameterized
 pillow
 plotly
 scikit-learn

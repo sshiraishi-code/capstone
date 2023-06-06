@@ -9,6 +9,7 @@
         "python.analysis.typeCheckingMode": "basic",
         "python.analysis.inlayHints.variableTypes": true,
         "python.analysis.inlayHints.functionReturnTypes": true,
-        "python.languageServer": "Pylance"
+        "python.languageServer": "Pylance",
+        "python.testing.unittestEnabled": true
     }
 }
